@@ -1,0 +1,363 @@
+﻿
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>OData Geo Demo</title>
+    <style type="text/css">
+    body
+    {
+        background-color: #F0F0F0;
+        font-family: "Segoe UI" ,Arial,sans-serif;
+        font-size: 12px;
+        padding: 10px;
+    }
+    
+    #grid_container
+    {
+        width: 100%;
+    }
+    
+    .ui-helper-clearfix:after
+    {
+        content: "";
+        display: table;
+    }
+    h1
+    {
+        font-size: 2em;
+        font-weight: 600;
+    }
+    
+    .cso-input-outer.search
+    {
+        padding: 4px 30px 4px 4px;
+    }
+    .cso-input-outer
+    {
+        background-color: #FFFFFF;
+        border-color: #C7C7C7 #D1D1D1 #D9D9D9;
+        border-image: none;
+        border-style: solid;
+        border-width: 1px;
+        box-shadow: 0 0 6px 0 #E7E7E7 inset;
+        display: block;
+        overflow: hidden;
+        padding: 4px;
+        position: relative;
+    }
+    .cso-corner
+    {
+        border-radius: 3px;
+    }
+    
+    .cso-input-outer input
+    {
+        background: none repeat scroll 0 0 rgba(0, 0, 0, 0);
+        border: medium none;
+    }
+    .cso-input-outer input, .cso-input-outer .disabled
+    {
+        height: 23px;
+        line-height: 23px;
+    }
+    .cso-input-outer input, .cso-input-outer textarea
+    {
+        outline: medium none;
+        width: 100%;
+    }
+    input, textarea
+    {
+        color: #4E4E4E;
+        font-family: "Segoe UI" ,Arial,sans-serif !important;
+        font-size: 12px;
+        line-height: 23px;
+    }
+    .cso-btn-primary
+    {
+        -moz-border-bottom-colors: none;
+        -moz-border-left-colors: none;
+        -moz-border-right-colors: none;
+        -moz-border-top-colors: none;
+        background: linear-gradient(to bottom, #0F94CB 0%, #0E8ABD 50%, #0D7CAA 100%) repeat-x scroll 0 0 rgba(0, 0, 0, 0);
+        border-color: #084F6C #095676 #0A6084;
+        border-image: none;
+        border-style: solid;
+        border-width: 1px;
+        box-shadow: 0 1px 0 #23B3EF inset;
+        color: #FFFFFF;
+        text-shadow: 0 1px 1px #06374B;
+    }
+    .cso-btn-primary
+    {
+        -moz-border-bottom-colors: none;
+        -moz-border-left-colors: none;
+        -moz-border-right-colors: none;
+        -moz-border-top-colors: none;
+        background: linear-gradient(to bottom, #37B0D7 0%, #30A2D0 50%, #2996C9 100%) repeat-x scroll 0 0 rgba(0, 0, 0, 0);
+        border-color: #007CA6 #0682AC #1086B4;
+        border-image: none;
+        border-style: solid;
+        border-width: 1px;
+        box-shadow: 0 1px 0 #69C4E1 inset;
+        color: #FFFFFF;
+        text-shadow: 0 1px 1px #155A7C;
+    }
+    .cso-btn
+    {
+        border-style: solid;
+        border-width: 1px;
+        cursor: pointer;
+        display: inline-block;
+        font-size: 1.2em;
+        font-weight: 600 !important;
+        line-height: 1.7em;
+        padding: 3px 11px;
+        position: relative;
+        text-align: center;
+        text-decoration: none;
+        vertical-align: middle;
+    }
+    .cso-btn
+    {
+        border-style: solid;
+        border-width: 1px;
+        cursor: pointer;
+        display: inline-block;
+        font-size: 1.2em;
+        font-weight: 600 !important;
+        line-height: 1.7em;
+        padding: 3px 11px;
+        position: relative;
+        text-align: center;
+        text-decoration: none;
+        vertical-align: middle;
+    }
+</style>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+    <script type="text/javascript">
+        var jsonData;
+        var dbTable;
+        var refreshChart = false;
+        var geomap;
+        var table;
+
+        //helper functions
+        var xhr = null;
+
+        function ax(url, data, onsucess, onfail, isasync, cancel) {
+            if (xhr != null && cancel) xhr.abort();
+            xhr = $.ajax({
+                type: "GET",
+                //headers: {
+                //    "Authorization": "Basic NTAwMDg6dGVzdA=="
+                //},
+                url: url,
+                async: isasync,
+                data: data,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (onsucess)
+                        onsucess(msg);
+                },
+                error: function (msg) {
+                    if (onfail)
+                        onfail(msg);
+                }
+            })
+            .done(function() {
+                if (refreshChart)
+                    DrawChart();
+                RefreshTable();
+            });
+        }
+            
+        function handleErrorResponse(response) {
+            if (response != null && response.statusText != null && response.statusText != "abort")
+                alert(response.statusText);
+        }
+
+        function myTrim(x) {
+            return x.replace(/^\s+|\s+$/gm, '');
+        }
+
+        function GetData(url) {
+            //$.getJSON(url)
+            //.success(function (data) { OnSuccess(data); })
+            //.done(function () {
+            //    if (refreshChart)
+            //        DrawChart();
+            //    RefreshTable();
+            //});
+
+            ax(url, null, OnSuccess, handleErrorResponse, true, false);
+
+
+        }
+
+        function OnSuccess(data) {
+            jsonData = _.countBy(data.value, function (r) {
+                return r.UserCountry;
+            });
+            PopulateTable(jsonData, false);
+            if (data["@odata.nextLink"] != null) {
+                refreshChart = false;
+                GetData(data["@odata.nextLink"]);
+            }
+            else {
+                refreshChart = true;
+            }
+        }
+        
+        function PopulateTable(dataArray, add) {
+            if ((dbTable == null)) {
+                dbTable = new google.visualization.DataTable();
+                dbTable.addColumn("string", "Country");
+                dbTable.addColumn('number', '# of Users');
+                console.log("Create dbTable");
+            }
+
+            _.each(dataArray, function (v, k) {
+                var key = $.trim(k.toString());
+				switch(key)
+				{
+					case 'usa':
+						key = 'US';
+						break;
+					case 'fra':
+						key = 'FR';
+						break;
+					case 'gbr':
+						key = 'GB';
+						break;
+					case 'ita':
+						key = 'IT';
+						break;
+					case 'nld':
+						key = 'NL';
+						break;
+					case 'deu':
+						key = 'DE';
+						break;
+					case 'esp':
+						key = 'ES';
+						break;
+					case 'swe':
+						key = 'sw';
+						break;
+					case 'blz':
+						key = 'BL';
+						break;
+					case 'alb':
+						key = 'AL';
+						break;
+					case 'irl':
+						key = 'IR';
+						break;
+					case 'syc':
+						key = 'SY';
+						break;
+					case 'col':
+						key = 'CO';
+						break;
+					case 'bra':
+						key = 'BR';
+						break;
+					case 'ind':
+						key = 'IN';
+						break;
+					case 'chn':
+						key = 'CN';
+						break;
+					case 'jpn':
+						key = 'JP';
+						break;
+					case 'aus':
+						key = 'AU';
+						break;
+					case 'nlz':
+						key = 'NZ';
+						break;
+					
+					
+				};
+				
+                var rows = dbTable.getFilteredRows([{ column: 0, value: key }]);
+                if (rows.length > 0) {
+                    var currentValue = dbTable.getValue(rows[0], 1);
+                    dbTable.setValue(rows[0], 1, currentValue + v);
+                }
+                else {
+                    dbTable.addRow([key, v]);
+                }
+            });
+        }
+    </script>
+    <script type="text/javascript">
+
+        // Load the Visualization API and the controls package.
+        google.load("visualization", "1.0", { packages: ["corechart", "geomap", "table"] });
+        google.setOnLoadCallback(Init);
+
+        function Init() {
+            GetData("https://demopm.csod.com/services/DWData/User?$select=UserCountry&$filter=UserCountry ne null and UserCountry ne ''");
+        }
+
+        function RefreshTable() {
+            if (table == null) {
+                table = new google.visualization.Table(document.getElementById('table_div'));
+            }
+            table.draw(dbTable, { showRowNumber: false});
+
+            // Set a 'select' event listener for the table.
+            // When the table is selected, we set the selection on the map.
+            google.visualization.events.addListener(table, 'select',
+                function () {
+                    geomap.setSelection(table.getSelection());
+                });
+
+        }
+
+        function DrawChart() {
+            var options = {
+                title: 'User\'s Distribution',
+                backgroundColor: { fill: 'blue' },
+                displayMode: 'auto',
+                width: 1000,
+                height: 800
+            };
+            
+            if (geomap == null) {
+                geomap = new google.visualization.GeoMap(document.getElementById('visualization'));
+            }
+            
+            geomap.draw(dbTable, options);
+            
+            // Set a 'select' event listener for the map.
+            // When the map is selected, we set the selection on the table.
+            google.visualization.events.addListener(geomap, 'select',
+                function () {
+                    table.setSelection(geomap.getSelection());
+                });
+        }
+
+    </script>
+
+</head>
+<body>
+
+    <table align="center">
+      <tr valign="top">
+        <td style="padding-right: 0px;">
+          <div id="table_div" style="width:200px;"></div>
+        </td>
+           <td align="left" style="width: 100%; padding-top: 0px; vertical-align:top;">
+          <div id="visualization" style="width: 1000px;"></div>
+        </td>
+      </tr>
+        </table>
+</body>
+</html>
