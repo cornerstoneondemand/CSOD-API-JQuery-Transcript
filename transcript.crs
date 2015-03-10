@@ -1,0 +1,16 @@
+[Course]
+Course_Creator=TransDemo
+Course_ID=200108
+Course_System=OData
+Course_Title=Transcript Demo
+Level=1
+Max_Fields_CST=2
+Total_AUs=1
+Total_Blocks=0
+Version=2.2
+
+[Course_Behavior]
+Max_Normal=99
+
+[Course_Description]
+Transcript Demo

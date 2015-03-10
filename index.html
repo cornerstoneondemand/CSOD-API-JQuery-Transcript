@@ -1,8 +1,26 @@
-<div id="list"><ul></ul></div>
+<html lang="en">
+ <head>
 
-
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
 <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th>First Name</th>
+            <th>Last Name </th>
+            <th>Courses Completed </th>
+        </tr>
+    </thead>
+    <tbody id="datarows">
+    <tbody>
+</table>
+</div>
 
 <script>var transcriptData = new Array();
 var top10 = new Array();
@@ -105,8 +123,9 @@ function displayTranscriptData(){
 
     for (var i = 0; i < 10; i++) {
         var transData = top10[i];
+        var rank = i+1; 
         if(typeof transData != 'undefined') {
-            $("#list ul").append('<li>' + '<span style="padding-right: 5px">' + transData.UserFirstName+" "+transData.UserLastName + '</span>' + '<span>' + transData.CompletedCount + '</span>' + '</li>');
+            $("#datarows").append('<tr><th scope="row">'+ rank +'</th><td>' + transData.UserFirstName +'</td><td>' + transData.UserLastName + '</td>' + '<td>' + transData.CompletedCount + '</td></tr>');
         }
     }
 };
@@ -123,3 +142,6 @@ function findByUserId(userId){
 
 getTranscriptData("https://demopm.csod.com/services/dwdata/Transcript?$select=TranscriptStatus&$filter=TranscriptStatus eq 64");
 </script>
+
+</body>
+</html>
